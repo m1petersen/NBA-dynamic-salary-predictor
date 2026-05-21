@@ -142,6 +142,12 @@ def predict_custom_player():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+import os
+
 if __name__ == '__main__':
-    # Runs automatically on your standard local workspace setup
-    app.run(debug=True, port=8000)
+    # Render assigns a port dynamically via an environment variable. 
+    # If it's not found (like when running locally), it defaults to 8000.
+    port = int(os.environ.get('PORT', 8000))
+    
+    # Crucial: bind to 0.0.0.0 so Render can route traffic to your app
+    app.run(host='0.0.0.0', port=port, debug=True)
