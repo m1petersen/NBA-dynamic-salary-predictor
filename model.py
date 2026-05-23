@@ -47,7 +47,6 @@ for i, season in enumerate(seasons_order):
     rf = RandomForestRegressor(n_estimators=400, max_depth=16, min_samples_leaf=2, random_state=42, n_jobs=-1)
     hgb = HistGradientBoostingRegressor(max_iter=400, max_depth=7, learning_rate=0.02, min_samples_leaf=5, l2_regularization=2.0, random_state=42)
     
-    # Wrap ensemble to automatically log-transform targets during training, and exponentiate for predictions
     ensemble = VotingRegressor([('rf', rf), ('hgb', hgb)], weights=[1.0, 1.5])
     log_model = TransformedTargetRegressor(regressor=ensemble, func=np.log1p, inverse_func=np.expm1)
     
@@ -72,6 +71,12 @@ for i, season in enumerate(seasons_order):
     underpaid = df_sub_copy.sort_values(by='Difference', ascending=False).head(5)
     overpaid = df_sub_copy.sort_values(by='Difference', ascending=True).head(5)
     
+    # CRITICAL: Added statistics directly into the scatter array format
+    scatter_fields = [
+        'PLAYER_NAME', 'Salary', 'Predicted_Salary', 'Season', 'Difference',
+        'NBA_FANTASY_PTS', 'MIN', 'GP', 'AGE'
+    ]
+    
     results[f"step_{i+1}"] = {
         "seasons_label": " & ".join(current_seasons),
         "r2": round(float(r2), 3),
@@ -79,10 +84,10 @@ for i, season in enumerate(seasons_order):
         "feature_importance": feat_imp,
         "underpaid": underpaid[['PLAYER_NAME', 'Salary', 'Predicted_Salary', 'Difference']].to_dict('records'),
         "overpaid": overpaid[['PLAYER_NAME', 'Salary', 'Predicted_Salary', 'Difference']].to_dict('records'),
-        "scatter": df_sub_copy[['PLAYER_NAME', 'Salary', 'Predicted_Salary', 'Season', 'Difference']].to_dict('records')
+        "scatter": df_sub_copy[scatter_fields].to_dict('records')
     }
 
 with open('nba_seasons_data.json', 'w') as f:
     json.dump(results, f)
 
-print("Target-normalized log-model generated and saved successfully!")
+print("Dataset generated successfully with performance metrics attached!")
